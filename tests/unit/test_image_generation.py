@@ -32,13 +32,31 @@ def test_adjust_contrast():
     contrast_image = generator.adjust_contrast(image, factor=2.0)
     assert contrast_image.size == image.size
 
+def test_adjust_color_balance():
+    generator = ImageGenerator()
+    image = Image.new("RGB", (256, 256), color=(100, 150, 200))  # Non-gray color
+    color_image = generator.adjust_color_balance(image, factor=2.0)
+    assert color_image.size == image.size
+    orig_pixel = image.getpixel((128, 128))
+    color_pixel = color_image.getpixel((128, 128))
+    assert color_pixel != orig_pixel  # Colors should change
+
+def test_adjust_saturation():
+    generator = ImageGenerator()
+    image = Image.new("RGB", (256, 256), color=(100, 150, 200))
+    sat_image = generator.adjust_saturation(image, factor=2.0)
+    assert sat_image.size == image.size
+    orig_pixel = image.getpixel((128, 128))
+    sat_pixel = sat_image.getpixel((128, 128))
+    assert sat_pixel != orig_pixel  # Saturation should alter RGB values
+
 def test_save_image_png():
     generator = ImageGenerator()
     image = Image.new("RGB", (256, 256), color="white")
     filepath = "output/test_output.png"
     generator.save_image(image, filepath, format="PNG")
     assert os.path.exists(filepath)
-    os.remove(filepath)  # Cleanup
+    os.remove(filepath)
 
 def test_save_image_jpeg():
     generator = ImageGenerator()
@@ -46,7 +64,7 @@ def test_save_image_jpeg():
     filepath = "output/test_output.jpg"
     generator.save_image(image, filepath, format="JPEG", quality=75)
     assert os.path.exists(filepath)
-    os.remove(filepath)  # Cleanup
+    os.remove(filepath)
 
 def test_save_image_invalid_format():
     generator = ImageGenerator()

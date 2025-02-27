@@ -3,7 +3,6 @@ import os
 from diffusers import StableDiffusionPipeline
 from PIL import Image, ImageEnhance
 
-
 class ImageGenerator:
     def __init__(self, model_id="runwayml/stable-diffusion-v1-5"):
         """Initialize the Stable Diffusion model."""
@@ -28,6 +27,16 @@ class ImageGenerator:
         enhancer = ImageEnhance.Contrast(image)
         return enhancer.enhance(factor)
 
+    def adjust_color_balance(self, image: Image, factor: float = 1.0) -> Image:
+        """Adjust color balance (0.0 = grayscale, 1.0 = original, >1.0 = more vibrant)."""
+        enhancer = ImageEnhance.Color(image)
+        return enhancer.enhance(factor)
+
+    def adjust_saturation(self, image: Image, factor: float = 1.0) -> Image:
+        """Adjust saturation (0.0 = grayscale, 1.0 = original, >1.0 = more saturated)."""
+        enhancer = ImageEnhance.Color(image)  # Alias for saturation in PIL
+        return enhancer.enhance(factor)
+
     def save_image(self, image: Image, filepath: str, format: str = "PNG", quality: int = 95) -> None:
         """Save the generated image with custom format and quality."""
         format = format.upper()
@@ -37,17 +46,20 @@ class ImageGenerator:
         # Ensure the output directory exists
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
+
         if format == "JPEG":
             image.save(filepath, format="JPEG", quality=quality)
         else:
             image.save(filepath, format="PNG")
         print(f"Image saved to {filepath} as {format}")
 
-
 if __name__ == "__main__":
     generator = ImageGenerator()
     prompt = "A futuristic cityscape at sunset, photorealistic style"
     image = generator.generate_image(prompt)
+    # Apply scene adjustments
     image = generator.adjust_brightness(image, factor=1.2)
     image = generator.adjust_contrast(image, factor=1.3)
+    image = generator.adjust_color_balance(image, factor=1.5)  # More vibrant colors
+    image = generator.adjust_saturation(image, factor=1.4)     # Boost saturation
     generator.save_image(image, "output/test_image_enhanced.jpg", format="JPEG", quality=85)
