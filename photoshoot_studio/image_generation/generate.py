@@ -1,6 +1,8 @@
 import torch
+import os
 from diffusers import StableDiffusionPipeline
 from PIL import Image, ImageEnhance
+
 
 class ImageGenerator:
     def __init__(self, model_id="runwayml/stable-diffusion-v1-5"):
@@ -26,16 +28,26 @@ class ImageGenerator:
         enhancer = ImageEnhance.Contrast(image)
         return enhancer.enhance(factor)
 
-    def save_image(self, image: Image, filepath: str):
-        """Save the generated image to disk."""
-        image.save(filepath)
-        print(f"Image saved to {filepath}")
+    def save_image(self, image: Image, filepath: str, format: str = "PNG", quality: int = 95) -> None:
+        """Save the generated image with custom format and quality."""
+        format = format.upper()
+        if format not in ["PNG", "JPEG"]:
+            raise ValueError("Unsupported format. Use 'PNG' or 'JPEG'.")
+
+        # Ensure the output directory exists
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+        if format == "JPEG":
+            image.save(filepath, format="JPEG", quality=quality)
+        else:
+            image.save(filepath, format="PNG")
+        print(f"Image saved to {filepath} as {format}")
+
 
 if __name__ == "__main__":
     generator = ImageGenerator()
     prompt = "A futuristic cityscape at sunset, photorealistic style"
     image = generator.generate_image(prompt)
-    # Apply scene adjustments
-    image = generator.adjust_brightness(image, factor=1.2)  # Slightly brighter
-    image = generator.adjust_contrast(image, factor=1.3)    # Higher contrast
-    generator.save_image(image, "output/test_image_enhanced.png")
+    image = generator.adjust_brightness(image, factor=1.2)
+    image = generator.adjust_contrast(image, factor=1.3)
+    generator.save_image(image, "output/test_image_enhanced.jpg", format="JPEG", quality=85)

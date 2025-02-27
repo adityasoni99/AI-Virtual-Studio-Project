@@ -19,18 +19,37 @@ def test_generate_image():
 
 def test_adjust_brightness():
     generator = ImageGenerator()
-    # Create a dummy image for testing
     image = Image.new("RGB", (256, 256), color="gray")
     bright_image = generator.adjust_brightness(image, factor=2.0)
     assert bright_image.size == image.size
-    # Check if brightness increased (simple pixel value check)
     orig_pixel = image.getpixel((128, 128))
     bright_pixel = bright_image.getpixel((128, 128))
-    assert bright_pixel[0] > orig_pixel[0]  # Red channel should be brighter
+    assert bright_pixel[0] > orig_pixel[0]
 
 def test_adjust_contrast():
     generator = ImageGenerator()
     image = Image.new("RGB", (256, 256), color="gray")
     contrast_image = generator.adjust_contrast(image, factor=2.0)
     assert contrast_image.size == image.size
-    # Basic check for contrast change is harder; verify it runs without error
+
+def test_save_image_png():
+    generator = ImageGenerator()
+    image = Image.new("RGB", (256, 256), color="white")
+    filepath = "output/test_output.png"
+    generator.save_image(image, filepath, format="PNG")
+    assert os.path.exists(filepath)
+    os.remove(filepath)  # Cleanup
+
+def test_save_image_jpeg():
+    generator = ImageGenerator()
+    image = Image.new("RGB", (256, 256), color="white")
+    filepath = "output/test_output.jpg"
+    generator.save_image(image, filepath, format="JPEG", quality=75)
+    assert os.path.exists(filepath)
+    os.remove(filepath)  # Cleanup
+
+def test_save_image_invalid_format():
+    generator = ImageGenerator()
+    image = Image.new("RGB", (256, 256), color="white")
+    with pytest.raises(ValueError):
+        generator.save_image(image, "output/test_output.xyz", format="XYZ")
