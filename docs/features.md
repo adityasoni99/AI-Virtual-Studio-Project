@@ -3,6 +3,9 @@
 - **Scene Editing**:
   - Brightness adjustment (factor: 0.0 to >1.0).
   - Contrast adjustment (factor: 0.0 to >1.0).
+  - Color balance adjustment (factor: 0.0 to >1.0).
+  - Saturation adjustment (factor: 0.0 to >1.0).
+  - Advanced ControlNet support (e.g., pose, background) with pre-trained models like `sd-controlnet-openpose`.
 - **Export System**:
   - Supports PNG (lossless) and JPEG (with quality setting, 0-100).
   - Example: `save_image(image, "output.jpg", format="JPEG", quality=85)`.

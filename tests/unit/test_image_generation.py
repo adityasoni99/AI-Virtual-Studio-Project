@@ -71,3 +71,10 @@ def test_save_image_invalid_format():
     image = Image.new("RGB", (256, 256), color="white")
     with pytest.raises(ValueError):
         generator.save_image(image, "output/test_output.xyz", format="XYZ")
+
+def test_generate_image_with_controlnet():
+    generator = ImageGenerator(controlnet_model_id="lllyasviel/sd-controlnet-openpose")
+    prompt = "A simple test image"
+    control_image = Image.new("RGB", (256, 256), color="black")  # Dummy control image
+    image = generator.generate_image(prompt, width=256, height=256, num_inference_steps=10, control_image=control_image)
+    assert image.size == (256, 256)
