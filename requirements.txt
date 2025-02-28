@@ -1,14 +1,16 @@
 # Core AI/ML frameworks
 torch>=2.1.0
 torchvision>=0.16.0
-tensorflow-macos>=2.15.0
+tensorflow-macos==2.16.2
 tensorflow-metal
 diffusers>=0.23.0
 transformers>=4.35.0
+controlnet_aux>=0.0.7
 
 # Image/3D processing
 opencv-python>=4.9.0
 pillow>=10.0.0
+mediapipe>=0.10.21
 
 # Backend and API
 fastapi>=0.110.0
@@ -19,7 +21,8 @@ pytest>=7.4.0
 pytest-asyncio>=0.23.0
 
 # Utilities
-numpy==1.26.4  # Pin to a stable version pre-2.0
+numpy==1.26.4
 matplotlib>=3.8.0
 requests>=2.31.0
 accelerate>=0.26.0
+ml-dtypes==0.3.2  # Pin to match TensorFlow 2.16.2
