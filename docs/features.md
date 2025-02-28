@@ -1,11 +1,11 @@
 ### Photoshoot Studio
 - **Image Generation**: Generates photorealistic images from text prompts using Stable Diffusion.
+- **ControlNet Support**:
+  - Supports multiple ControlNet types (e.g., Canny, Depth).
+  - Example: `generate_image(prompt, control_images=[canny_img, depth_img], control_weights=[0.8, 0.6])`.
+  - Canny: Conditions on edge maps for structural outlines.
+  - Depth: Conditions on depth maps for spatial structure.
 - **Scene Editing**:
-  - Brightness adjustment (factor: 0.0 to >1.0).
-  - Contrast adjustment (factor: 0.0 to >1.0).
-  - Color balance adjustment (factor: 0.0 to >1.0).
-  - Saturation adjustment (factor: 0.0 to >1.0).
-  - Advanced ControlNet support (e.g., pose, background) with pre-trained models like `sd-controlnet-openpose`.
+  - Brightness, contrast, color balance, and saturation adjustments.
 - **Export System**:
-  - Supports PNG (lossless) and JPEG (with quality setting, 0-100).
-  - Example: `save_image(image, "output.jpg", format="JPEG", quality=85)`.
+  - Supports PNG and JPEG with quality settings.

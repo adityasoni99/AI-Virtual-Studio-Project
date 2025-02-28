@@ -17,6 +17,37 @@ def test_generate_image():
     image = generator.generate_image(prompt, width=256, height=256, num_inference_steps=10)
     assert image.size == (256, 256)
 
+def test_generate_image_with_canny_controlnet():
+    generator = ImageGenerator(controlnet_model_ids=["lllyasviel/sd-controlnet-canny"])
+    prompt = "A simple test image"
+    control_image = Image.new("L", (256, 256), color=0)  # Dummy Canny (black edges)
+    image = generator.generate_image(
+        prompt,
+        width=256,
+        height=256,
+        num_inference_steps=10,
+        control_images=control_image,
+        control_weights=1.0  # Pass a float for single ControlNet
+    )
+    assert image.size == (256, 256)
+
+def test_generate_image_with_multi_controlnet():
+    generator = ImageGenerator(controlnet_model_ids=["lllyasviel/sd-controlnet-canny", "lllyasviel/sd-controlnet-depth"])
+    prompt = "A simple test image"
+    control_images = [
+        Image.new("L", (256, 256), color=0),   # Dummy Canny
+        Image.new("L", (256, 256), color=128)  # Dummy Depth
+    ]
+    image = generator.generate_image(
+        prompt,
+        width=256,
+        height=256,
+        num_inference_steps=10,
+        control_images=control_images,
+        control_weights=[0.7, 0.5]
+    )
+    assert image.size == (256, 256)
+
 def test_adjust_brightness():
     generator = ImageGenerator()
     image = Image.new("RGB", (256, 256), color="gray")
@@ -34,12 +65,12 @@ def test_adjust_contrast():
 
 def test_adjust_color_balance():
     generator = ImageGenerator()
-    image = Image.new("RGB", (256, 256), color=(100, 150, 200))  # Non-gray color
+    image = Image.new("RGB", (256, 256), color=(100, 150, 200)) # Non-gray color
     color_image = generator.adjust_color_balance(image, factor=2.0)
     assert color_image.size == image.size
     orig_pixel = image.getpixel((128, 128))
     color_pixel = color_image.getpixel((128, 128))
-    assert color_pixel != orig_pixel  # Colors should change
+    assert color_pixel != orig_pixel # Colors should change
 
 def test_adjust_saturation():
     generator = ImageGenerator()
@@ -48,7 +79,7 @@ def test_adjust_saturation():
     assert sat_image.size == image.size
     orig_pixel = image.getpixel((128, 128))
     sat_pixel = sat_image.getpixel((128, 128))
-    assert sat_pixel != orig_pixel  # Saturation should alter RGB values
+    assert sat_pixel != orig_pixel # Saturation should alter RGB values
 
 def test_save_image_png():
     generator = ImageGenerator()
@@ -71,10 +102,3 @@ def test_save_image_invalid_format():
     image = Image.new("RGB", (256, 256), color="white")
     with pytest.raises(ValueError):
         generator.save_image(image, "output/test_output.xyz", format="XYZ")
-
-def test_generate_image_with_controlnet():
-    generator = ImageGenerator(controlnet_model_id="lllyasviel/sd-controlnet-openpose")
-    prompt = "A simple test image"
-    control_image = Image.new("RGB", (256, 256), color="black")  # Dummy control image
-    image = generator.generate_image(prompt, width=256, height=256, num_inference_steps=10, control_image=control_image)
-    assert image.size == (256, 256)
