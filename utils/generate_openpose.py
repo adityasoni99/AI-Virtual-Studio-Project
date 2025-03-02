@@ -1,4 +1,3 @@
-# utils/generate_openpose.py
 from PIL import Image
 from controlnet_aux import OpenposeDetector
 import os
@@ -12,5 +11,6 @@ for input_file in ["portrait.jpg", "landscape.jpg", "group.jpg"]:
         continue
     input_image = Image.open(input_path).convert("RGB")
     pose_image = pose_estimator(input_image, hand_and_face=True)
+    pose_image = pose_image.resize((1024, 1024))  # Updated to 1024x1024
     pose_image.save(output_path)
     print(f"OpenPose control image saved to {output_path}")

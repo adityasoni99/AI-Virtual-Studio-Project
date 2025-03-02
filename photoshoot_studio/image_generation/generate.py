@@ -1,132 +1,113 @@
 import torch
-import os
-from diffusers import StableDiffusionPipeline, StableDiffusionControlNetPipeline, ControlNetModel
+from diffusers import StableDiffusionXLPipeline, StableDiffusionXLImg2ImgPipeline
 from PIL import Image, ImageEnhance
 from typing import List, Optional, Union
 
-
 class ImageGenerator:
-    def __init__(self, model_id: str = "runwayml/stable-diffusion-v1-5",
-                 controlnet_model_ids: Optional[List[str]] = None):
+    def __init__(self, model_id: str = "stabilityai/stable-diffusion-xl-base-1.0",
+                 refiner_id: str = "stabilityai/stable-diffusion-xl-refiner-1.0"):
+        """Initialize the SDXL model with refiner and memory optimization."""
         self.device = "mps" if torch.backends.mps.is_available() else "cpu"
-        self.supported_controlnets = {
-            "canny": "lllyasviel/sd-controlnet-canny",
-            "depth": "lllyasviel/sd-controlnet-depth",
-            "hed": "lllyasviel/sd-controlnet-hed",
-            "openpose": "lllyasviel/sd-controlnet-openpose",
-            "normal": "lllyasviel/sd-controlnet-normal"
-        }
-        if controlnet_model_ids:
-            resolved_model_ids = [self.supported_controlnets.get(model_id, model_id) for model_id in
-                                  controlnet_model_ids]
-            controlnets = [ControlNetModel.from_pretrained(model_id).to(self.device) for model_id in resolved_model_ids]
-            self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
-                model_id, controlnet=controlnets if len(controlnets) > 1 else controlnets[0]
-            ).to(self.device)
-        else:
-            self.pipe = StableDiffusionPipeline.from_pretrained(model_id).to(self.device)
-        self.pipe.safety_checker = None
+        print(f"Initialized with device: {self.device}")
+
+        self.pipe = StableDiffusionXLPipeline.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16,
+            variant="fp16",
+            use_safetensors=True
+        )
+        self.pipe.enable_model_cpu_offload(device=self.device)
+        self.pipe.enable_vae_slicing()
+        print(f"Base pipeline device: {self.pipe.device}")
+
+        self.refiner = StableDiffusionXLImg2ImgPipeline.from_pretrained(
+            refiner_id,
+            torch_dtype=torch.float16,
+            variant="fp16",
+            use_safetensors=True
+        )
+        self.refiner.enable_model_cpu_offload(device=self.device)
+        self.refiner.enable_vae_slicing()
+        print(f"Refiner pipeline device: {self.refiner.device}")
 
     def generate_image(
             self,
             prompt: str,
-            width: int = 512,
-            height: int = 512,
-            num_inference_steps: int = 50,
+            width: int = 1024,
+            height: int = 1024,
+            num_inference_steps: int = 100,
+            negative_prompt: str = "blurry, low quality, dark, distorted, unrealistic",
             control_images: Optional[Union[Image.Image, List[Image.Image]]] = None,
-            control_weights: Optional[Union[float, List[float]]] = None
+            control_weights: Optional[Union[float, List[float]]] = None,
+            control_types: Optional[List[str]] = None
     ) -> Image:
+        """Generate and refine an image from a text prompt."""
         with torch.no_grad():
-            if control_images and isinstance(self.pipe, StableDiffusionControlNetPipeline):
-                control_images = [control_images] if isinstance(control_images, Image.Image) else control_images
-                if control_weights is None:
-                    control_weights = 1.0 if len(control_images) == 1 else [1.0] * len(control_images)
-                elif isinstance(control_weights, float) and len(control_images) > 1:
-                    control_weights = [control_weights] * len(control_images)
-                elif isinstance(control_weights, list) and len(control_weights) != len(control_images):
-                    raise ValueError(
-                        f"Length of `control_weights` ({len(control_weights)}) must match length of `control_images` ({len(control_images)})."
-                    )
-                conditioning_scale = control_weights if len(control_images) > 1 else control_weights[0] if isinstance(
-                    control_weights, list) else control_weights
-                image = self.pipe(
-                    prompt,
-                    image=control_images,
-                    width=width,
-                    height=height,
-                    num_inference_steps=num_inference_steps,
-                    controlnet_conditioning_scale=conditioning_scale
-                ).images[0]
-            else:
-                image = self.pipe(prompt, width=width, height=height, num_inference_steps=num_inference_steps).images[0]
-        return image
+            initial_image = self.pipe(
+                prompt,
+                width=width,
+                height=height,
+                num_inference_steps=num_inference_steps,
+                guidance_scale=9.5,
+                negative_prompt=negative_prompt,
+            ).images[0]
 
-    def adjust_brightness(self, image: Image, factor: float = 1.0) -> Image:
-        enhancer = ImageEnhance.Brightness(image)
-        return enhancer.enhance(factor)
+            refined_image = self.refiner(
+                prompt,
+                image=initial_image,
+                num_inference_steps=30,
+                strength=0.3,
+                guidance_scale=7.5,
+                negative_prompt=negative_prompt
+            ).images[0]
 
-    def adjust_contrast(self, image: Image, factor: float = 1.0) -> Image:
+            enhanced_image = self.adjust_brightness(refined_image, factor=1.25)
+            enhanced_image = self.adjust_saturation(enhanced_image, factor=1.45)
+            enhanced_image = self.adjust_contrast(enhanced_image, factor=1.1)
+
+            torch.mps.empty_cache()
+            return enhanced_image
+
+    def adjust_contrast(self, image: Image, factor: float = 1.1) -> Image:
         enhancer = ImageEnhance.Contrast(image)
         return enhancer.enhance(factor)
 
-    def adjust_color_balance(self, image: Image, factor: float = 1.0) -> Image:
+    def adjust_brightness(self, image: Image, factor: float = 1.25) -> Image:
+        enhancer = ImageEnhance.Brightness(image)
+        return enhancer.enhance(factor)
+
+    def adjust_saturation(self, image: Image, factor: float = 1.45) -> Image:
         enhancer = ImageEnhance.Color(image)
         return enhancer.enhance(factor)
 
-    def adjust_saturation(self, image: Image, factor: float = 1.0) -> Image:
-        enhancer = ImageEnhance.Color(image)
-        return enhancer.enhance(factor)
-
-    def save_image(self, image: Image, filepath: str, format: str = "PNG", quality: int = 95) -> None:
+    def save_image(self, image: Image, filepath: str, format: str = "JPEG", quality: int = 90) -> None:
         format = format.upper()
         if format not in ["PNG", "JPEG"]:
             raise ValueError("Unsupported format. Use 'PNG' or 'JPEG'.")
-
-        # Ensure the output directory exists
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-
-        if format == "JPEG":
-            image.save(filepath, format="JPEG", quality=quality)
-        else:
-            image.save(filepath, format="PNG")
-        print(f"Image saved to {filepath} as {format}")
-
+        image.save(filepath, format=format, quality=quality)
+        print(f"Image saved to {filepath}")
 
 if __name__ == "__main__":
-    # Test scenarios with HED, OpenPose, and Normal ControlNets
-    controlnet_model_ids = ["hed", "openpose", "normal"]
-    generator = ImageGenerator(controlnet_model_ids=controlnet_model_ids)
+    generator = ImageGenerator()
 
     scenarios = [
         {
             "name": "portrait",
-            "prompt": "A superhero standing confidently, photorealistic style",
-            "weights": [0.7, 0.95, 0.5]  # Strong OpenPose for pose, moderate HED, light Normal
+            "prompt": "A highly detailed superhero standing confidently, cinematic lighting, intricate costume design, photorealistic style",
+            "negative": "blurry, low quality, dark, distorted, unrealistic, flat lighting"
         },
         {
             "name": "landscape",
-            "prompt": "A futuristic cityscape at sunset, photorealistic style",
-            "weights": [0.9, 0.1, 0.8]  # Strong HED for edges, light OpenPose, moderate Normal
+            "prompt": "A futuristic cityscape at sunset with intricate details, vibrant colors, towering skyscrapers, photorealistic style",
+            "negative": "blurry, low quality, dark, distorted, unrealistic, dull colors"
         },
         {
             "name": "group",
-            "prompt": "A team of heroes posing together, photorealistic style",
-            "weights": [0.5, 0.85, 0.6]  # Balanced HED, strong OpenPose, moderate Normal
+            "prompt": "A team of heroes posing together in a dynamic scene, detailed costumes, dramatic lighting, photorealistic style",
+            "negative": "blurry, low quality, dark, distorted, unrealistic, misaligned poses"
         }
     ]
 
     for scenario in scenarios:
-        control_images = [
-            Image.open(f"examples/hed_{scenario['name']}.png").resize((512, 512)),
-            Image.open(f"examples/openpose_{scenario['name']}.png").resize((512, 512)),
-            Image.open(f"examples/normal_{scenario['name']}.png").resize((512, 512))
-        ]
-        image = generator.generate_image(
-            scenario["prompt"],
-            control_images=control_images,
-            control_weights=scenario["weights"],
-            num_inference_steps=20
-        )
-        image = generator.adjust_brightness(image, factor=1.2)
-        image = generator.adjust_saturation(image, factor=1.4)
-        generator.save_image(image, f"output/test_{scenario['name']}_enhanced.jpg", format="JPEG", quality=85)
+        image = generator.generate_image(scenario["prompt"], negative_prompt=scenario["negative"])
+        generator.save_image(image, f"output/test_{scenario['name']}_sdxl_refined.jpg")

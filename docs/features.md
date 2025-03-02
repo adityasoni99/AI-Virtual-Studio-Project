@@ -1,15 +1,6 @@
 ### Photoshoot Studio
-- **Image Generation**: Generates photorealistic images from text prompts using Stable Diffusion.
-- **ControlNet Support**:
-  - Supports multiple ControlNet types: Canny, Depth, HED, OpenPose, Normal.
-  - Shorthand names: `"canny"`, `"depth"`, `"hed"`, `"openpose"`, `"normal"`.
-  - Example: `generate_image(prompt, control_images=[hed_img, pose_img, normal_img], control_weights=[0.7, 0.8, 0.5])`.
-  - Canny: Edge outlines.
-  - Depth: Spatial depth.
-  - HED: Soft, artistic edges.
-  - OpenPose: Human pose skeletons.
-  - Normal: Surface normals for lighting.
-- **Scene Editing**:
-  - Brightness, contrast, color balance, saturation adjustments.
-- **Export System**:
-  - Supports PNG and JPEG with quality settings.
+- **Image Generation**: Generates photorealistic 1024x1024 images using SDXL with refiner.
+  - Base: 100 steps, guidance scale 9.5, tailored negative prompts.
+  - Refiner: 30 steps, strength 0.3, guidance scale 7.5.
+  - Post-Processing: Brightness 1.25, Saturation 1.45, Contrast 1.1.
+- **Export**: Supports JPEG/PNG with quality settings.
