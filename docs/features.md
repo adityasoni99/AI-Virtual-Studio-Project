@@ -25,8 +25,8 @@ The core image generation module, providing photorealistic rendering capabilitie
 
 - **Export System**:
   - **Formats**: JPEG (lossy), PNG (lossless).
-  - **Quality**: Fixed at 90 (configurable in future updates).
-  - **Example**: `save_image(image, "output/test_image.jpg", format="JPEG")`.
+  - **Quality**: Configurable for JPEG (0-100), defaults to 90; ignored for PNG.
+  - **Example**: `save_image(image, "output/test_image.jpg", format="JPEG", quality=75)`.
 
 - **API**:
   - **Endpoint**: `POST /api/generate`
@@ -36,14 +36,15 @@ The core image generation module, providing photorealistic rendering capabilitie
     - `width`: Optional, defaults to 1024.
     - `height`: Optional, defaults to 1024.
     - `format`: Optional, defaults to "JPEG", options: "JPEG", "PNG".
-  - **Response**: Generated image file in specified format (JPEG or PNG).
+    - `quality`: Optional, defaults to 90, range 0-100 (JPEG only).
+  - **Response**: Generated image file in specified format and quality.
   - **Example**:
     ```bash
     curl -X POST "http://localhost:8000/api/generate" \
          -H "Content-Type: application/json" \
-         -d '{"prompt": "A superhero", "negative_prompt": "blurry, low quality", "format": "PNG"}' \
-         --output image.png
+         -d '{"prompt": "A superhero", "format": "JPEG", "quality": 75}' \
+         --output image.jpg
   - **Status Codes**:
     - `200 OK`: Image generated successfully.
-    - `400 Bad Request`: Invalid format specified.
+    - `400 Bad Request`: Invalid format or quality specified.
     - `500 Internal Server Error`: Unexpected generation failure.
