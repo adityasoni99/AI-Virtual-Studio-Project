@@ -86,12 +86,14 @@ class ImageGenerator:
             if control_images and self.controlnets:
                 if len(control_images) != len(self.controlnets):
                     raise ValueError(
-                        f"Number of control images ({len(control_images)}) must match number of ControlNet models ({len(self.controlnets)})")
+                        f"Number of control images ({len(control_images)}) must match number"
+                        f" of ControlNet models ({len(self.controlnets)})")
                 self.pipe = self.control_pipe
                 control_weights = control_weights or [1.0] * len(control_images)
                 if len(control_weights) != len(control_images):
                     raise ValueError(
-                        f"Number of control weights ({len(control_weights)}) must match number of control images ({len(control_images)})")
+                        f"Number of control weights ({len(control_weights)}) must match number"
+                        f" of control images ({len(control_images)})")
 
                 initial_image = self.pipe(
                     prompt,

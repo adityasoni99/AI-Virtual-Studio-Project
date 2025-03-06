@@ -33,6 +33,12 @@ class GenerateRequest(BaseModel):
             raise ValueError("Quality must be between 0 and 100 for JPEG")
         return v
 
+    @field_validator("width", "height")
+    def validate_resolution(cls, v):
+        if v < 64 or v > 2048:
+            raise ValueError("Width and height must be between 64 and 2048 pixels")
+        return v
+
 
 @router.post("/generate", response_class=FileResponse)
 async def generate_image(
@@ -45,6 +51,7 @@ async def generate_image(
         control_weights: Optional[str] = Form(None),
         control_images: List[UploadFile] = File(None)
 ):
+    """Generate an image from a text prompt with optional ControlNet and custom resolution."""
     try:
         weights = json.loads(control_weights) if control_weights else None
 
