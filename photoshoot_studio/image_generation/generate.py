@@ -9,8 +9,16 @@ class ImageGenerator:
     def __init__(self, model_id: str = "stabilityai/stable-diffusion-xl-base-1.0",
                  refiner_id: str = "stabilityai/stable-diffusion-xl-refiner-1.0",
                  controlnet_model_ids: Optional[List[str]] = None):
-        """Initialize the SDXL model with refiner and optional ControlNet support."""
-        self.device = "mps" if torch.backends.mps.is_available() else "cpu"
+        """Initialize the SDXL model with refiner and optional ControlNet support, GPU-agnostic."""
+        # Dynamically select device: CUDA > MPS > CPU
+        if torch.cuda.is_available():
+            self.device = "cuda"
+            torch.cuda.empty_cache()  # Clear CUDA memory
+        elif torch.backends.mps.is_available():
+            self.device = "mps"
+            torch.mps.empty_cache()  # Clear MPS memory
+        else:
+            self.device = "cpu"
         print(f"Initialized with device: {self.device}")
 
         # ControlNet setup
@@ -24,7 +32,7 @@ class ImageGenerator:
         # Load base pipeline (without ControlNet initially)
         self.base_pipe = StableDiffusionXLPipeline.from_pretrained(
             model_id,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,  # FP16 for GPU/MPS, FP32 for CPU
             variant="fp16",
             use_safetensors=True
         )
@@ -34,13 +42,14 @@ class ImageGenerator:
         # Load ControlNet models if provided
         self.controlnets = None
         if self.controlnet_model_ids:
-            self.controlnets = [
-                ControlNetModel.from_pretrained(self.supported_controlnets.get(cid, cid), torch_dtype=torch.float16)
-                for cid in self.controlnet_model_ids]
+            self.controlnets = [ControlNetModel.from_pretrained(
+                self.supported_controlnets.get(cid, cid),
+                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32
+            ) for cid in self.controlnet_model_ids]
             self.control_pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
                 model_id,
                 controlnet=self.controlnets if len(self.controlnets) > 1 else self.controlnets[0],
-                torch_dtype=torch.float16,
+                torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
                 variant="fp16",
                 use_safetensors=True
             )
@@ -54,7 +63,7 @@ class ImageGenerator:
         # Refiner pipeline
         self.refiner = StableDiffusionXLImg2ImgPipeline.from_pretrained(
             refiner_id,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.float16 if self.device != "cpu" else torch.float32,
             variant="fp16",
             use_safetensors=True
         )
@@ -74,7 +83,6 @@ class ImageGenerator:
     ) -> Image:
         """Generate and refine an image from a text prompt with optional ControlNet."""
         with torch.no_grad():
-            # Select pipeline based on control images
             if control_images and self.controlnets:
                 if len(control_images) != len(self.controlnets):
                     raise ValueError(
@@ -87,7 +95,7 @@ class ImageGenerator:
 
                 initial_image = self.pipe(
                     prompt,
-                    image=control_images,  # Pass list directly
+                    image=control_images,
                     width=width,
                     height=height,
                     num_inference_steps=num_inference_steps,
@@ -106,7 +114,6 @@ class ImageGenerator:
                     negative_prompt=negative_prompt
                 ).images[0]
 
-            # Refine the image
             refined_image = self.refiner(
                 prompt,
                 image=initial_image,
@@ -116,12 +123,16 @@ class ImageGenerator:
                 negative_prompt=negative_prompt
             ).images[0]
 
-            # Post-processing
             enhanced_image = self.adjust_brightness(refined_image, factor=1.25)
             enhanced_image = self.adjust_saturation(enhanced_image, factor=1.45)
             enhanced_image = self.adjust_contrast(enhanced_image, factor=1.1)
 
-            torch.mps.empty_cache()
+            # Clear device-specific memory
+            if self.device == "cuda":
+                torch.cuda.empty_cache()
+            elif self.device == "mps":
+                torch.mps.empty_cache()
+
             return enhanced_image
 
     def adjust_contrast(self, image: Image, factor: float = 1.1) -> Image:

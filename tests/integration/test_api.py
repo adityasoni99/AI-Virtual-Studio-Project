@@ -3,7 +3,8 @@ from fastapi.testclient import TestClient
 from backend.main import app
 import os
 from io import BytesIO
-from PIL import Image  # Ensure import
+from PIL import Image
+import torch
 
 client = TestClient(app)
 
@@ -68,10 +69,7 @@ def test_generate_image_api_invalid_quality():
 
 
 def test_generate_image_api_controlnet():
-    # Ensure examples directory exists
     os.makedirs("examples", exist_ok=True)
-
-    # Use dummy files if real ones are missing
     if not os.path.exists("examples/openpose_portrait.png"):
         Image.new("RGB", (128, 128)).save("examples/openpose_portrait.png")
     if not os.path.exists("examples/hed_portrait.png"):
