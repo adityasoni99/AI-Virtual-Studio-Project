@@ -123,15 +123,22 @@ python backend/main.py
 - Generated images are stored under `output/` (sample images are already present and referenced in this repository).
 
 ## Sample outputs
-Below are example outputs produced by the repository pipelines. These images are referenced from the `output/` directory in the repo. If you don't see them rendered on GitHub, make sure the corresponding files exist under `output/` (for example: `output/sample_render_1.jpg`, `output/sample_render_2.jpg`, `output/sample_render_3.jpg`).
+Sample Outputs:
 
-![Studio render 1](output/sample_render_1.jpg)
+![SuperHero](output/generated_15546398048.jpg)
 
-![Studio render 2](output/sample_render_2.jpg)
+![SuperHero](output/generated_15784001264.jpg)
 
-![Studio render 3](output/sample_render_3.jpg)
 
-If you'd like, I can also add these sample images to the repository (commit the image files) — just attach the image files here or point me to the commit(s) that contain them and I will restore them.
+![Futuristic Landscape](output/generated_15385336800.jpeg)
+
+![Futuristic Landscape](output/generated_15643269392.png)
+
+![Jewelry Ad](output/generated_15639978608.jpeg)
+
+![Animated Landscape](output/generated_15599224496.jpeg)
+
+If you'd like, I can also add more sample images to the repository (commit the image files) — just attach the image files here or point me to the commit(s) that contain them and I will restore them.
 
 ## Tests
 - pytest configuration is present (pytest.ini), and tests are in `tests/`. Run:
