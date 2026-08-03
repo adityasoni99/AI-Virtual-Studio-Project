@@ -112,6 +112,12 @@ python backend/main.py
 
 4. Generate an image (example curl shown above).
 
+## Highlights
+- Inference & deployment: End-to-end inference API using FastAPI + Uvicorn (backend/main.py, backend/api/endpoints.py) demonstrating production-serving patterns.
+- PyTorch & GPU usage: Uses PyTorch-based diffusers pipelines (photoshoot_studio/image_generation/generate.py) with explicit device selection (CUDA/MPS/CPU) and fp16 usage.
+- Memory/edge awareness: Model CPU offload, VAE slicing, dtype switching and other memory optimizations for constrained devices.
+- Generative pipeline orchestration: SDXL base + refiner + ControlNet orchestration and post-processing pipelines provide experience with complex model orchestration.
+
 ## Examples & outputs
 - Input control images and examples live in `examples/` (openpose_example.png, hed_example.png, normal_map_example.png, etc.) — helpful when testing ControlNet-guided generation.
 - Generated images are stored under `output/` (sample images are already present and referenced in this repository).
@@ -129,9 +135,7 @@ pytest
 See CONTRIBUTING.md for contribution guidelines.
 
 ## License
-This repository did not contain a LICENSE file in the snapshot; add one (e.g., MIT) if you want to make the project open-source.
+This repository is licensed under the MIT License — see LICENSE for details.
 
-## Try asking
-- How do I change the default SDXL/Refiner pipeline parameters (steps, guidance scale, strength) and where are they set in code? (Hint: check photoshoot_studio/image_generation/generate.py)
-- Which backend/api endpoints exist besides `/api/generate` and where is the request validation defined? (Hint: inspect `backend/api/endpoints.py`)
-- The docs mention memory optimizations (CPU offload / VAE slicing); which module handles model loading and how can I enable/disable those options for local experiments?
+## Roadmap
+See `docs/roadmap.md` for a prioritized roadmap to expand inference/runtime/agent capabilities and optimization work.
