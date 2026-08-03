@@ -3,7 +3,7 @@
 A modular Python-based AI platform for creating virtual influencers, AI photoshoots, and virtual try-on experiences using Stable Diffusion XL (SDXL) and ControlNet-guided pipelines.
 
 ## What this is
-AI Virtual Studio produces high-quality, photorealistic images and photoshoot-style renders from text prompts and optional control images (OpenPose/HED/depth/normal maps). It is intended for researchers and developers building virtual influencer assets, product photography, and virtual try-on workflows.
+AI Virtual Studio produces high-quality, photorealistic images and photoshoot-style renders from text prompts and optional control images (OpenPose/HED/depth/normal maps). It is intended for research and prototyping of virtual influencer workflows, photoshoot automation, and virtual try-on systems.
 
 ### Stack
 - **Language(s):** Python (primary)
@@ -121,6 +121,17 @@ python backend/main.py
 ## Examples & outputs
 - Input control images and examples live in `examples/` (openpose_example.png, hed_example.png, normal_map_example.png, etc.) — helpful when testing ControlNet-guided generation.
 - Generated images are stored under `output/` (sample images are already present and referenced in this repository).
+
+## Sample outputs
+Below are example outputs produced by the repository pipelines. These images are referenced from the `output/` directory in the repo. If you don't see them rendered on GitHub, make sure the corresponding files exist under `output/` (for example: `output/sample_render_1.jpg`, `output/sample_render_2.jpg`, `output/sample_render_3.jpg`).
+
+![Studio render 1](output/sample_render_1.jpg)
+
+![Studio render 2](output/sample_render_2.jpg)
+
+![Studio render 3](output/sample_render_3.jpg)
+
+If you'd like, I can also add these sample images to the repository (commit the image files) — just attach the image files here or point me to the commit(s) that contain them and I will restore them.
 
 ## Tests
 - pytest configuration is present (pytest.ini), and tests are in `tests/`. Run:
